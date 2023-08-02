@@ -83,7 +83,7 @@ func setup(t *testing.T) *C {
 		}
 	}
 	server := httptest.NewServer(NewRouter(
-		dao.NewAccount(db), dao.NewStatus(db),
+		dao.NewAccount(db), //dao.NewStatus(db),
 	))
 
 	return &C{

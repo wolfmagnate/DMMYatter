@@ -9,5 +9,13 @@ import (
 type Account interface {
 	// Fetch account which has specified username
 	FindByUsername(ctx context.Context, username string) (*object.Account, error)
-	// TODO: Add Other APIs
+	// Find follower of specified account
+	FindFollowerOfAccount(ctx context.Context, followee *object.Account) ([]*object.Account, error)
+	// Find followee of specified account
+	FindFolloweeOfAccount(ctx context.Context, follower *object.Account) ([]*object.Account, error)
+
+	// Update account information.
+	UpdateAccountCredential(ctx context.Context, account *object.Account) error
+	// Create a new account.
+	CreateNewAccount(ctx context.Context, account *object.Account) (*object.Account, error)
 }
