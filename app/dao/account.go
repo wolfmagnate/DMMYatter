@@ -53,7 +53,7 @@ func (r *account) FindByID(ctx context.Context, id int64) (*object.Account, erro
 }
 
 // Find follower of specified account
-func (r *account) FindFollowerOfAccount(ctx context.Context, followee *object.Account) ([]*object.Account, error) {
+func (r *account) FindFollowerOfAccount(ctx context.Context, followee *object.Account) (object.AccountGroup, error) {
 	rows, err := r.db.QueryxContext(ctx, "select acc.* from account as acc join (select * from relationship where followee_id = ?) as rel on acc.id = rel.follower_id", followee.ID)
 	if err != nil {
 		return nil, err
@@ -71,7 +71,7 @@ func (r *account) FindFollowerOfAccount(ctx context.Context, followee *object.Ac
 }
 
 // Find followee of specified account
-func (r *account) FindFolloweeOfAccount(ctx context.Context, follower *object.Account) ([]*object.Account, error) {
+func (r *account) FindFolloweeOfAccount(ctx context.Context, follower *object.Account) (object.AccountGroup, error) {
 	rows, err := r.db.QueryxContext(ctx, "select acc.* from account as acc join (select * from relationship where follower_id = ?) as rel on acc.id = rel.followeee_id", follower.ID)
 	if err != nil {
 		return nil, err
@@ -99,7 +99,7 @@ func (r *account) UpdateAccountCredential(ctx context.Context, account *object.A
 
 // Create a new account. Return the created account
 func (r *account) CreateNewAccount(ctx context.Context, account *object.Account) (*object.Account, error) {
-	_, err := r.db.ExecContext(ctx, "insert into account (id, username, password_hash, display_name, avatar, header, note, create_at) values (?, ?, ?, ?, ?, ?, ?, ?)", account.ID, account.Username, account.PasswordHash, account.DisplayName, account.Avatar, account.Header, account.Note, account.CreateAt)
+	_, err := r.db.ExecContext(ctx, "insert into account (username, password_hash, display_name, avatar, header, note, create_at) values (?, ?, ?, ?, ?, ?, ?, ?)", account.Username, account.PasswordHash, account.DisplayName, account.Avatar, account.Header, account.Note, account.CreateAt)
 	if err != nil {
 		return nil, err
 	}

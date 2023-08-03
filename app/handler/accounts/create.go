@@ -15,7 +15,7 @@ type AddRequest struct {
 
 // Handle request for `POST /v1/accounts`
 func (h *handler) Create(w http.ResponseWriter, r *http.Request) {
-	//ctx := r.Context()
+	ctx := r.Context()
 
 	var req AddRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -29,8 +29,9 @@ func (h *handler) Create(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+	account.SetCreateAt()
 
-	panic("Must Implement Account Registration")
+	h.ar.CreateNewAccount(ctx, account)
 
 	w.Header().Set("Content-Type", "application/json")
 	if err := json.NewEncoder(w).Encode(account); err != nil {

@@ -27,5 +27,8 @@ func serve(ctx context.Context) error {
 
 	return http.ListenAndServe(addr, handler.NewRouter(
 		dao.NewAccount(db),
+		dao.NewMedia(db),
+		dao.NewRelationship(db),
+		dao.NewStatus(db),
 	))
 }

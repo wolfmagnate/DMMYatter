@@ -37,6 +37,8 @@ type Account struct {
 	CreateAt time.Time `json:"create_at,omitempty" db:"create_at"`
 }
 
+type AccountGroup []*Account
+
 // Check if given password is match to account's password
 func (a *Account) CheckPassword(pass string) bool {
 	return bcrypt.CompareHashAndPassword([]byte(a.PasswordHash), []byte(pass)) == nil
@@ -58,4 +60,23 @@ func generatePasswordHash(pass string) (string, error) {
 		return "", fmt.Errorf("hashing password failed: %w", err)
 	}
 	return string(hash), nil
+}
+
+func (a *Account) SetCreateAt() {
+	a.CreateAt = time.Now()
+}
+
+func (accounts AccountGroup) Filter(max_id int64, since_id int64, limit int64) AccountGroup {
+	var filteredAccounts AccountGroup
+	count := int64(0)
+	for _, account := range accounts {
+		if account.ID > since_id && account.ID < max_id {
+			filteredAccounts = append(filteredAccounts, account)
+			count++
+			if count >= limit {
+				break
+			}
+		}
+	}
+	return filteredAccounts
 }
