@@ -31,7 +31,11 @@ func (h *handler) Create(w http.ResponseWriter, r *http.Request) {
 	}
 	account.SetCreateAt()
 
-	h.ar.CreateNewAccount(ctx, account)
+	account, err := h.ar.CreateNewAccount(ctx, account)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 
 	w.Header().Set("Content-Type", "application/json")
 	if err := json.NewEncoder(w).Encode(account); err != nil {

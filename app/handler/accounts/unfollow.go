@@ -2,23 +2,17 @@ package accounts
 
 import (
 	"net/http"
+	"yatter-backend-go/app/domain/object"
 	"yatter-backend-go/app/handler/auth"
 )
 
 func (h *handler) Unfollow(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	username := ctx.Value(usernameKey{}).(string)
-	authUsername := ctx.Value(auth.AuthUsernameKey{}).(string)
+	follower := ctx.Value(auth.AuthUsernameKey).(*object.Account)
 
 	// クエリパラメータからfolloweeを取得する
 	followee, err := h.ar.FindByUsername(ctx, username)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	// 認証ヘッダを元にfollowerを取得する
-	follower, err := h.ar.FindByUsername(ctx, authUsername)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

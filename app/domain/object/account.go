@@ -24,6 +24,12 @@ type Account struct {
 	// The account's display name
 	DisplayName *string `json:"display_name,omitempty" db:"display_name"`
 
+	// How many accounts follows the account
+	FollowerCount int64 `json:"followers_count" db:"-"`
+
+	// How many accounts the account follows
+	FolloweeCount int64 `json:"following_count" db:"-"`
+
 	// URL to the avatar image
 	Avatar *string `json:"avatar,omitempty"`
 

@@ -5,21 +5,16 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"yatter-backend-go/app/domain/object"
 	"yatter-backend-go/app/handler/auth"
 )
 
 func (h *handler) UpdateCredential(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	authUsername := ctx.Value(auth.AuthUsernameKey{}).(string)
-
-	account, err := h.ar.FindByUsername(ctx, authUsername)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
+	account := ctx.Value(auth.AuthUsernameKey).(*object.Account)
 
 	// クエリの情報に従ってaccountの内容を更新する
-	err = r.ParseMultipartForm(32 << 20) // 32MB
+	err := r.ParseMultipartForm(32 << 20) // 32MB
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
