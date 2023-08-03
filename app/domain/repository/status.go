@@ -11,5 +11,5 @@ type Status interface {
 	// Find a status with the specified id.
 	FindStatus(ctx context.Context, id int64) (*object.Status, error)
 	// Delete a status with the specified id.
-	DeleteStatus(ctx context.Context, id int64) (*object.Status, error)
+	DeleteStatus(ctx context.Context, id int64) error
 }

@@ -8,5 +8,5 @@ type Media struct {
 	URL string
 
 	// Type of this media. For example image, video, sound.
-	MediaType string
+	MediaType string `db:"type"`
 }

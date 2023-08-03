@@ -15,7 +15,7 @@ type Status struct {
 	// The time this status was posted
 	CreateAt time.Time `json:"create_at,omitempty" db:"create_at"`
 
-	AttachedMedias []AttachedMedia
+	AttachedMedias []*AttachedMedia
 }
 
 type AttachedMedia struct {
