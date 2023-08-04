@@ -11,4 +11,7 @@ type Relationship interface {
 
 	// Unfollow a user, return true if succeeded
 	UnfollowUser(ctx context.Context, follower *object.Account, folowee *object.Account) error
+
+	// Get following and followedBy
+	GetRelationship(ctx context.Context, self *object.Account, others []*object.Account) ([]*object.Relationship, error)
 }

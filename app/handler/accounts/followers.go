@@ -2,7 +2,6 @@ package accounts
 
 import (
 	"encoding/json"
-	"fmt"
 	"math"
 	"net/http"
 	"yatter-backend-go/app/handler/util"
@@ -42,7 +41,6 @@ func (h *handler) Followers(w http.ResponseWriter, r *http.Request) {
 	}
 
 	followers = followers.Filter(max_id, since_id, limit)
-	fmt.Println(followers)
 	w.Header().Set("Content-Type", "application/json")
 	if err := json.NewEncoder(w).Encode(followers); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)

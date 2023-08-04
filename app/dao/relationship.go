@@ -84,3 +84,29 @@ func (r *relationship) UnfollowUser(ctx context.Context, follower *object.Accoun
 
 	return nil
 }
+
+func (r *relationship) GetRelationship(ctx context.Context, self *object.Account, others []*object.Account) ([]*object.Relationship, error) {
+	results := make([]*object.Relationship, 0)
+	for _, other := range others {
+		result := new(object.Relationship)
+		result.OtherID = other.ID
+
+		var followedByCount int
+		err := r.db.QueryRowContext(ctx, "SELECT COUNT(*) FROM relationship WHERE followee_id = ? AND follower_id = ?", self.ID, other.ID).Scan(&followedByCount)
+		if err != nil {
+			return nil, fmt.Errorf("failed to execute query for checking if user with ID %d is followed by user with ID %d: %w", self.ID, other.ID, err)
+		}
+		result.FollowedBy = (followedByCount == 1)
+
+		var followingCount int
+		err = r.db.QueryRowContext(ctx, "SELECT COUNT(*) FROM relationship WHERE followee_id = ? AND follower_id = ?", other.ID, self.ID).Scan(&followingCount)
+		if err != nil {
+			return nil, fmt.Errorf("failed to execute query for checking if user with ID %d is following user with ID %d: %w", self.ID, other.ID, err)
+		}
+		result.Following = (followingCount == 1)
+
+		results = append(results, result)
+	}
+
+	return results, nil
+}

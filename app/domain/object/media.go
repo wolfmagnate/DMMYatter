@@ -19,6 +19,9 @@ type Media struct {
 }
 
 func NewDummyHostMedia(data []byte) *Media {
+	// 永続化の処理をドメインでやるのはどうなのかという話もありつつ、保存先URLの決定は実際に書き込むわけではないという言い方もできる
+	// accountのupdate credentialの方だとdaoでこの処理をやっている
+	// 少なくともどっちかに決めたほうがいいけど書き直す時間がなかった
 	m := Media{}
 
 	hasher := sha256.New()

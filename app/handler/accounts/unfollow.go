@@ -1,6 +1,7 @@
 package accounts
 
 import (
+	"encoding/json"
 	"net/http"
 	"yatter-backend-go/app/domain/object"
 	"yatter-backend-go/app/handler/auth"
@@ -24,6 +25,18 @@ func (h *handler) Unfollow(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	others := make([]*object.Account, 0)
+	others = append(others, followee)
+	relationships, err := h.rr.GetRelationship(ctx, follower, others)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
 	w.Header().Set("Content-Type", "application/json")
+	if err := json.NewEncoder(w).Encode(relationships[0]); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 
 }

@@ -17,11 +17,13 @@ type handler struct {
 
 // Create Handler for `/v1/accounts/`
 func NewRouter(ar repository.Account, rr repository.Relationship) http.Handler {
+
 	r := chi.NewRouter()
 
 	h := &handler{ar, rr}
 	r.Post("/", h.Create)
 	r.With(auth.Middleware(ar)).Post("/update_credentials", h.UpdateCredential)
+	r.With(auth.Middleware(ar)).Get("/relationships", h.Relationships)
 	r.Route("/{username}", func(r chi.Router) {
 		r.Use(usernameContext)
 		r.Get("/", h.Get)
