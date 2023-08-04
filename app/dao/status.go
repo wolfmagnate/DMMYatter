@@ -2,6 +2,7 @@ package dao
 
 import (
 	"context"
+	"fmt"
 	"time"
 	"yatter-backend-go/app/domain/object"
 	"yatter-backend-go/app/domain/repository"
@@ -23,10 +24,51 @@ type status struct {
 func NewStatus(db *sqlx.DB) repository.Status {
 	return &status{db: db}
 }
+
 func (s *status) CreateStatus(ctx context.Context, status *object.Status) error {
-	query := `INSERT INTO status (id, account_id, content, create_at) VALUES (?, ?, ?, ?)`
-	_, err := s.db.ExecContext(ctx, query, status.ID, status.PostedBy.ID, status.Content, status.CreateAt)
-	return err
+	tx, err := s.db.BeginTxx(ctx, nil)
+	if err != nil {
+		return fmt.Errorf("failed to start transaction: %w", err)
+	}
+	defer tx.Rollback()
+
+	query := `INSERT INTO status (account_id, content, create_at) VALUES (?, ?, ?)`
+	result, err := tx.ExecContext(ctx, query, status.PostedBy.ID, status.Content, status.CreateAt)
+	if err != nil {
+		return fmt.Errorf("failed to insert status into db: %w", err)
+	}
+	fmt.Println("successfully add to status")
+
+	id, err := result.LastInsertId()
+	if err != nil {
+		return fmt.Errorf("failed to get last insert id: %w", err)
+	}
+	status.ID = id
+
+	fmt.Println("successfully get status id")
+	for _, attachedMedia := range status.AttachedMedias {
+
+		fmt.Println(attachedMedia)
+		mediaID := attachedMedia.Content.ID
+		statusID := status.ID
+		desc := attachedMedia.Description
+
+		_, err = tx.ExecContext(ctx, "INSERT INTO attachment (status_id, media_id, description) VALUES (?, ?, ?)", statusID, mediaID, desc)
+
+		if err != nil {
+			return fmt.Errorf("failed to insert into attachment: %w", err)
+		}
+
+		fmt.Println("successfully add to attachment")
+	}
+
+	err = tx.Commit()
+	fmt.Println("committed")
+	if err != nil {
+		return fmt.Errorf("failed to commit transaction: %w", err)
+	}
+
+	return nil
 }
 
 // Find a status with the specified id.
@@ -53,7 +95,7 @@ func (s *status) FindStatus(ctx context.Context, id int64) (*object.Status, erro
 	retStatus.PostedBy = postedby
 
 	// attachmentテーブルのうち、status_idが等しいものに対応するmedia_idを全て取得する
-	query = `SELECT media_id description FROM attachment WHERE status_id = ?`
+	query = `SELECT media_id, description FROM attachment WHERE status_id = ?`
 	rows, err := s.db.QueryxContext(ctx, query, id)
 	if err != nil {
 		return nil, err

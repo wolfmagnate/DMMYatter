@@ -1,10 +1,15 @@
 package dao
 
 import (
+	"bytes"
 	"context"
+	"crypto/sha256"
 	"database/sql"
 	"errors"
 	"fmt"
+	"io"
+	"net/http"
+	"os"
 	"yatter-backend-go/app/domain/object"
 	"yatter-backend-go/app/domain/repository"
 
@@ -113,11 +118,41 @@ func (r *account) FindFolloweeOfAccount(ctx context.Context, follower *object.Ac
 }
 
 // Update account information. Return true if succeeded
-func (r *account) UpdateAccountCredential(ctx context.Context, account *object.Account) error {
-	_, err := r.db.ExecContext(ctx, "update account set display_name = ?, note = ?, avatar = ?, header = ? where id = ?", account.DisplayName, account.Note, account.Avatar, account.Header, account.ID)
+func (r *account) UpdateAccountCredential(ctx context.Context, account *object.Account, avatarData []byte, headerData []byte) error {
+	tx, err := r.db.BeginTx(ctx, nil)
+	if err != nil {
+		return fmt.Errorf("failed to begin transaction: %w", err)
+	}
+
+	defer tx.Rollback()
+
+	if account.Avatar != nil {
+		avatarFileName, err := r.saveImage(avatarData, "./postedImages")
+		if err != nil {
+			return fmt.Errorf("failed to save avatar image: %w", err)
+		}
+		account.Avatar = &avatarFileName
+	}
+
+	if account.Header != nil {
+		headerFileName, err := r.saveImage(headerData, "./postedImages")
+		if err != nil {
+			return fmt.Errorf("failed to save header image: %w", err)
+		}
+
+		account.Header = &headerFileName
+	}
+
+	_, err = tx.ExecContext(ctx, "update account set display_name = ?, note = ?, avatar = ?, header = ? where id = ?", account.DisplayName, account.Note, account.Avatar, account.Header, account.ID)
 	if err != nil {
 		return fmt.Errorf("failed to update account db: %w", err)
 	}
+
+	err = tx.Commit()
+	if err != nil {
+		return fmt.Errorf("failed to commit transaction: %w", err)
+	}
+
 	return nil
 }
 
@@ -145,4 +180,42 @@ func (r *account) CreateNewAccount(ctx context.Context, account *object.Account)
 	}
 
 	return entity, nil
+}
+
+func (r *account) saveImage(imageData []byte, dir string) (string, error) {
+	hash := sha256.Sum256(imageData)
+
+	contentType := http.DetectContentType(imageData)
+
+	var extension string
+	switch contentType {
+	case "image/jpeg":
+		extension = ".jpg"
+	case "image/png":
+		extension = ".png"
+	default:
+		return "", fmt.Errorf("unsupported content type: %s", contentType)
+	}
+
+	fileName := fmt.Sprintf("%x%s", hash, extension)
+
+	if _, err := os.Stat(dir); os.IsNotExist(err) {
+		err = os.MkdirAll(dir, 0755)
+		if err != nil {
+			return "", err
+		}
+	}
+
+	file, err := os.Create(fmt.Sprintf("%s/%s", dir, fileName))
+	if err != nil {
+		return "", err
+	}
+	defer file.Close()
+
+	_, err = io.Copy(file, bytes.NewReader(imageData))
+	if err != nil {
+		return "", err
+	}
+
+	return fileName, nil
 }

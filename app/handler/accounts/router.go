@@ -36,10 +36,12 @@ func NewRouter(ar repository.Account, rr repository.Relationship) http.Handler {
 
 type usernameKey struct{}
 
+var UsernameKey = usernameKey{}
+
 func usernameContext(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		username := chi.URLParam(r, "username")
-		ctx := context.WithValue(r.Context(), usernameKey{}, username)
+		ctx := context.WithValue(r.Context(), UsernameKey, username)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }

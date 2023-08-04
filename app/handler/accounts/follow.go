@@ -9,7 +9,7 @@ import (
 
 func (h *handler) Follow(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	username := ctx.Value(usernameKey{}).(string)
+	username := ctx.Value(UsernameKey).(string)
 	follower := ctx.Value(auth.AuthUsernameKey).(*object.Account)
 
 	fmt.Println("find followee")

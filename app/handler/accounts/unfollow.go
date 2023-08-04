@@ -8,7 +8,7 @@ import (
 
 func (h *handler) Unfollow(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	username := ctx.Value(usernameKey{}).(string)
+	username := ctx.Value(UsernameKey).(string)
 	follower := ctx.Value(auth.AuthUsernameKey).(*object.Account)
 
 	// クエリパラメータからfolloweeを取得する

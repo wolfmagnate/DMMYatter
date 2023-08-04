@@ -17,7 +17,7 @@ type Account interface {
 	FindFolloweeOfAccount(ctx context.Context, follower *object.Account) (object.AccountGroup, error)
 
 	// Update account information.
-	UpdateAccountCredential(ctx context.Context, account *object.Account) error
+	UpdateAccountCredential(ctx context.Context, account *object.Account, avatarData []byte, headerData []byte) error
 	// Create a new account.
 	CreateNewAccount(ctx context.Context, account *object.Account) (*object.Account, error)
 }

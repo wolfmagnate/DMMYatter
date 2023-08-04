@@ -18,22 +18,26 @@ func NewMedia(db *sqlx.DB) repository.Media {
 }
 
 // Create the specified media
-func (m *media) SaveMedia(ctx context.Context, media *object.Media) error {
+func (m *media) SaveMedia(ctx context.Context, media *object.Media) (int64, error) {
 	query := `SELECT * FROM media WHERE id = ?`
 	var existMedia object.Media
 	err := m.db.QueryRowxContext(ctx, query, media.ID).StructScan(&existMedia)
 
 	if err != sql.ErrNoRows {
-		return err
+		return 0, err
 	}
 
 	query = `INSERT INTO media (id, type, url) VALUES (?, ?, ?)`
-	_, err = m.db.ExecContext(ctx, query, media.ID, media.MediaType, media.URL)
+	result, err := m.db.ExecContext(ctx, query, media.ID, media.MediaType, media.URL)
 
 	if err != nil {
-		return err
+		return 0, err
 	}
-	return nil
+	id, err := result.LastInsertId()
+	if err != nil {
+		return 0, err
+	}
+	return id, nil
 }
 
 // Find a media with the specified id

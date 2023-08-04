@@ -24,3 +24,7 @@ type AttachedMedia struct {
 	// description of the media in a status
 	Description string
 }
+
+func (s *Status) SetCreateAt() {
+	s.CreateAt = time.Now()
+}

@@ -1,23 +1,23 @@
-package accounts
+package statuses
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 )
 
 func (h *handler) Get(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	username := ctx.Value(UsernameKey).(string)
-	account, err := h.ar.FindByUsername(ctx, username)
+	id := ctx.Value(IDKey).(int64)
+
+	newStatus, err := h.sr.FindStatus(ctx, id)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	fmt.Println(account)
-	if err := json.NewEncoder(w).Encode(account); err != nil {
+
+	if err := json.NewEncoder(w).Encode(newStatus); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}

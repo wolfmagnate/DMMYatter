@@ -30,5 +30,6 @@ func serve(ctx context.Context) error {
 		dao.NewMedia(db),
 		dao.NewRelationship(db),
 		dao.NewStatus(db),
+		dao.NewTimeline(db),
 	))
 }

@@ -2,7 +2,6 @@ package accounts
 
 import (
 	"encoding/json"
-	"fmt"
 	"io"
 	"net/http"
 	"yatter-backend-go/app/domain/object"
@@ -13,43 +12,67 @@ func (h *handler) UpdateCredential(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	account := ctx.Value(auth.AuthUsernameKey).(*object.Account)
 
-	// クエリの情報に従ってaccountの内容を更新する
 	err := r.ParseMultipartForm(32 << 20) // 32MB
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	err = h.ar.UpdateAccountCredential(ctx, account)
+	var avatarData, headerData []byte
+	for _, key := range []string{"avatar", "header"} {
+		files, ok := r.MultipartForm.File[key]
+		if !ok {
+			continue
+		}
+
+		if len(files) != 1 {
+			http.Error(w, "only one file is allowed", http.StatusBadRequest)
+			return
+		}
+
+		file, err := files[0].Open()
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		defer file.Close()
+
+		data, err := io.ReadAll(file)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		contentType := http.DetectContentType(data)
+		if contentType != "image/jpeg" && contentType != "image/png" {
+			http.Error(w, "file type not allowed", http.StatusBadRequest)
+			return
+		}
+
+		if key == "avatar" {
+			avatarData = data
+		} else {
+			headerData = data
+		}
+	}
+
+	if noteValues, ok := r.MultipartForm.Value["note"]; ok && len(noteValues) > 0 {
+		note := noteValues[0]
+		account.Note = &note
+	}
+
+	displayNameValues, ok := r.MultipartForm.Value["display_name"]
+	if !ok || len(displayNameValues) == 0 {
+		http.Error(w, "display_name value not found", http.StatusBadRequest)
+		return
+	}
+	displayName := displayNameValues[0]
+	account.DisplayName = &displayName
+
+	err = h.ar.UpdateAccountCredential(ctx, account, avatarData, headerData)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
-	}
-
-	fmt.Fprintln(w, "# MultipartForm.Value")
-	for k, v := range r.MultipartForm.Value {
-		fmt.Fprintln(w, k, v)
-	}
-
-	fmt.Fprintln(w, "# MultipartForm.File")
-	for k, v := range r.MultipartForm.File {
-		fmt.Fprintln(w, "## Key:", k)
-		for _, fh := range v {
-			fmt.Fprintln(w, "## Filename:", fh.Filename)
-			f, err := fh.Open()
-			if err != nil {
-				fmt.Fprintln(w, err)
-				break
-			}
-			defer f.Close()
-			b, err := io.ReadAll(f)
-			if err != nil {
-				fmt.Fprintln(w, err)
-				break
-			}
-			fmt.Fprintln(w, "## Body:")
-			fmt.Fprintln(w, string(b))
-		}
 	}
 
 	w.Header().Set("Content-Type", "application/json")
