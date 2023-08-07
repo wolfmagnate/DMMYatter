@@ -9,7 +9,9 @@ import (
 	"yatter-backend-go/app/domain/repository"
 )
 
-var contextKey = new(struct{})
+type authUsernameKey struct{}
+
+var AuthUsernameKey = authUsernameKey{}
 
 // Auth by header
 func Middleware(ar repository.Account) func(http.Handler) http.Handler {
@@ -39,7 +41,7 @@ func Middleware(ar repository.Account) func(http.Handler) http.Handler {
 				http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
 				return
 			} else {
-				next.ServeHTTP(w, r.WithContext(context.WithValue(r.Context(), contextKey, account)))
+				next.ServeHTTP(w, r.WithContext(context.WithValue(r.Context(), AuthUsernameKey, account)))
 			}
 		})
 	}
@@ -47,7 +49,7 @@ func Middleware(ar repository.Account) func(http.Handler) http.Handler {
 
 // Read Account data from authorized request
 func AccountOf(r *http.Request) *object.Account {
-	if cv := r.Context().Value(contextKey); cv == nil {
+	if cv := r.Context().Value(AuthUsernameKey); cv == nil {
 		return nil
 
 	} else if account, ok := cv.(*object.Account); !ok {

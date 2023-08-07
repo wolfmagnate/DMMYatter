@@ -7,10 +7,6 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-// 本当はPasswordHashがハッシュされたパスワードであることを型で保証したい。
-// ハッシュ化されたパスワード用の型を用意してstringと区別して管理すると良い。
-// 今回は簡単のためstringで管理している。
-
 type Account struct {
 	// The internal ID of the account
 	ID int64 `json:"id,omitempty"`
@@ -24,6 +20,12 @@ type Account struct {
 	// The account's display name
 	DisplayName *string `json:"display_name,omitempty" db:"display_name"`
 
+	// How many accounts follows the account
+	FollowerCount int64 `json:"followers_count" db:"-"`
+
+	// How many accounts the account follows
+	FolloweeCount int64 `json:"following_count" db:"-"`
+
 	// URL to the avatar image
 	Avatar *string `json:"avatar,omitempty"`
 
@@ -36,6 +38,8 @@ type Account struct {
 	// The time the account was created
 	CreateAt time.Time `json:"create_at,omitempty" db:"create_at"`
 }
+
+type AccountGroup []*Account
 
 // Check if given password is match to account's password
 func (a *Account) CheckPassword(pass string) bool {
@@ -58,4 +62,23 @@ func generatePasswordHash(pass string) (string, error) {
 		return "", fmt.Errorf("hashing password failed: %w", err)
 	}
 	return string(hash), nil
+}
+
+func (a *Account) SetCreateAt() {
+	a.CreateAt = time.Now()
+}
+
+func (accounts AccountGroup) Filter(max_id int64, since_id int64, limit int64) AccountGroup {
+	var filteredAccounts AccountGroup
+	count := int64(0)
+	for _, account := range accounts {
+		if account.ID > since_id && account.ID < max_id {
+			filteredAccounts = append(filteredAccounts, account)
+			count++
+			if count >= limit {
+				break
+			}
+		}
+	}
+	return filteredAccounts
 }
